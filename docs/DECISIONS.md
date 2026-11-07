@@ -188,3 +188,19 @@ MAE in dollars; each fold forecasts the entire next month from its first day. Fu
 **Trade-off:** the empirical sd is itself an estimate from ~181 daily points per machine and is noisy for machines with short tenure. We accept that over a formula known to be biased in a direction that manufactures false suspects. In a challenge that forbids accusations, a method that over-flags is the wrong kind of wrong.
 
 **Consequence:** `machine_diagnosis.csv` carries both `z` and `z_formula`, plus `var_ratio`; the dashboard shows the empirical score and offers the formula one as a toggle, so a judge can see the alternative explanation. Full account in [`Q1.md`](Q1.md#why-we-had-to-fix-the-variance-formula-first).
+
+---
+
+## D8 · Lost play is valued hour by hour, and reported as an upper bound
+
+**Date:** 2026-11-07
+
+**Decision:** Downtime is valued by multiplying each unavailable second by *that machine's* coin-in rate for *that local hour* (from `machine_hour`), then converting to theo with the machine's theo hold. We report theo, not coin-in, as "lost play," and label it an upper bound.
+
+**Why hour-weighted:** outages cluster in the busy evening hours, so the flat estimate (down hours × floor-average theo per hour) understates the loss by about 10% ($89.8K vs. $98.9K). Hour-weighting also lets us split the cost by shift, which is what the technician action needs.
+
+**Why theo:** coin-in is wagers, most of which are paid back to players. Theo is the expected house win on those wagers, the amount the casino actually forgoes.
+
+**Why an upper bound:** the method assumes every lost wager vanished. In practice some guests move to a neighboring machine, and the floor has spare seats. Substitution cannot be measured from these tables, so we state the bound and do not net it down by a guessed factor.
+
+**Consequence:** the technician action is evaluated against the *waiting* slice only (the part a technician removes), valued the same way. Full account in [`Q3.md`](Q3.md).

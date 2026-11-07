@@ -7,6 +7,7 @@ Our working plan for **Dashboard Royale** (TAMU Datathon). The official rules ar
 | **OVERVIEW.md** (this file) | The challenge, deliverables, approach, traps, order of work |
 | [`DECISIONS.md`](DECISIONS.md) | Every non-obvious choice with its reasoning (fork, DuckDB, architecture, Lean, uv, model) |
 | [`Q1.md`](Q1.md) | Which machines are truly weak: the GM's list diagnosed, the Back Forty, M-1158, Ridgeline |
+| [`Q3.md`](Q3.md) | Downtime: 0.38% of time, $99K theo, a quarter of it waiting for a tech; why the technician action doesn't pay |
 | [`MODEL.md`](MODEL.md) | The forecast: protocol, candidates, results, conclusions, limitations |
 | [`IDEAS.md`](IDEAS.md) | Open questions, leads from the data, ideas not yet decided |
 
@@ -156,7 +157,7 @@ flowchart LR
 ```mermaid
 flowchart LR
     S1["1. Reproduce GM's<br/>bottom 10 ✓"] --> S2["2. Q1: re-rank by<br/>luck + exposure ✓"]
-    S2 --> S3["3. Q3 downtime →<br/>Q2 demand →<br/>Q4 players → Q5 comps"]
+    S2 --> S3["3. Q3 downtime ✓ →<br/>Q2 demand →<br/>Q4 players → Q5 comps"]
     S3 --> S5["5. Q6 budget plan<br/>+ Lean checker"]
     S4["4. Forecast model ✓<br/>(AutoETS, rolling CV)"] --> S5
     S5 --> S6["6. Dashboard →<br/>appendix → write-up → video"]
@@ -167,7 +168,7 @@ flowchart LR
 
 1. ~~Load the 3 starter files; reproduce the GM's naive bottom 10~~ done
 2. ~~Re-rank by luck-adjusted, exposure-adjusted measures (Q1)~~ done: 9 of 10 are a traffic problem in the Back Forty, one machine to inspect ([`Q1.md`](Q1.md))
-3. Downtime (Q3) → demand (Q2) → players (Q4) → comps (Q5)
+3. ~~Downtime (Q3)~~ done: small (0.42% of theo), a quarter is waiting for a tech, Ridgeline is a brand problem; technician action doesn't pay ([`Q3.md`](Q3.md)) → demand (Q2) → players (Q4) → comps (Q5)
 4. ~~Forecast model + baseline~~ done: AutoETS chosen by rolling CV ([`MODEL.md`](MODEL.md)); prediction intervals still to add
 5. Budget plan (Q6) + Lean feasibility check
 6. Dashboard → appendix → write-up → video
