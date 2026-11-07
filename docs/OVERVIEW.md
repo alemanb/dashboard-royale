@@ -2,6 +2,13 @@
 
 Our working plan for **Dashboard Royale** (TAMU Datathon). The official rules are in [`../GUIDE.md`](../GUIDE.md); this folder holds *our* thinking.
 
+| Doc | What's in it |
+|---|---|
+| **OVERVIEW.md** (this file) | The challenge, deliverables, approach, traps, order of work |
+| [`DECISIONS.md`](DECISIONS.md) | Every non-obvious choice with its reasoning (fork, DuckDB, architecture, Lean, uv, model) |
+| [`MODEL.md`](MODEL.md) | The forecast: protocol, candidates, results, conclusions, limitations |
+| [`IDEAS.md`](IDEAS.md) | Open questions, leads from the data, ideas not yet decided |
+
 ## The idea in one paragraph
 
 The GM of The Gilded Ace (a fictional 300-machine casino) wants to replace the 10 machines that earned the least from Jan 1 to Jun 30, 2025. A low-earning machine might be **unlucky, badly placed, often broken, or paying out wrong**, and each cause needs a different fix. We build an interactive dashboard that tests all four explanations, finds the machines that are *truly* weak, and ends with how we'd spend a pretend **$100,000** (or why we'd keep it).
@@ -80,6 +87,6 @@ hold            = SUM(house_win) / SUM(coin_in)      -- ratio of sums, never mea
 1. Load the 3 starter files; reproduce the GM's naive bottom 10
 2. Re-rank by luck-adjusted, exposure-adjusted measures (Q1)
 3. Downtime (Q3) → demand (Q2) → players (Q4) → comps (Q5)
-4. Forecast model + baseline
+4. ~~Forecast model + baseline~~ done: AutoETS chosen by rolling CV ([`MODEL.md`](MODEL.md)); prediction intervals still to add
 5. Budget plan (Q6) + Lean feasibility check
 6. Dashboard → appendix → write-up → video
