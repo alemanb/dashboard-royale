@@ -15,6 +15,20 @@ The GM of The Gilded Ace (a fictional 300-machine casino) wants to replace the 1
 
 The data is fixed and synthetic. We don't generate data, and there is no answer key: judges grade the **reasoning**, not a hidden "correct" list.
 
+```mermaid
+flowchart TD
+    GM["GM's list:<br/>10 lowest-earning machines"] --> Q{"Why did each<br/>one earn little?"}
+    Q -->|"bad luck"| L["Leave it alone<br/>(keep the budget)"]
+    Q -->|"quiet spot"| P["Move it, or<br/>add signs to the zone"]
+    Q -->|"often broken"| D["Technician or<br/>preventive maintenance"]
+    Q -->|"pays out wrong"| K["Inspect it<br/>(a lead, not an accusation)"]
+    L & P & D & K --> B["$100,000 plan,<br/>each action priced + measured"]
+    style GM fill:#f4e1c1,stroke:#8a6d3b
+    style B fill:#d4edda,stroke:#2e7d32
+```
+
+Replacing a machine only helps if the machine itself is the problem. Most of the GM's list, we expect, is not.
+
 ## The deliverables
 
 | Piece | What it is | Rubric weight |
@@ -38,6 +52,21 @@ Also submitted: video (≤ 2 min), write-up (≤ 400 words), all code, AI-use di
 
 ## How we tell the four causes apart
 
+The diagnostic path, applied to every machine. Each step rules one cause in or out before moving to the next:
+
+```mermaid
+flowchart LR
+    M["One machine,<br/>low house win"] --> E{"Was it on the floor<br/>and working?"}
+    E -->|"low availability"| DT["DOWNTIME<br/>fix repairs"]
+    E -->|"yes"| X{"Did it get<br/>enough play?"}
+    X -->|"low theo per<br/>available hour"| LOC["LOCATION<br/>move it / signs"]
+    X -->|"yes"| Z{"Actual vs. expected:<br/>how many swings off?"}
+    Z -->|"z between −2 and +2"| OK["LUCK<br/>normal result"]
+    Z -->|"z < −3, lots of play,<br/>low volatility"| LEAK["LEAK?<br/>inspect"]
+    style OK fill:#d4edda,stroke:#2e7d32
+    style LEAK fill:#f8d7da,stroke:#b71c1c
+```
+
 | Cause | Signal in the data | Fix |
 |---|---|---|
 | Luck | Actual house win far below theo, a large negative z-score, high-volatility game | None; keep budget |
@@ -55,7 +84,46 @@ z               = luck_residual / normal_swing
 hold            = SUM(house_win) / SUM(coin_in)      -- ratio of sums, never mean of ratios
 ```
 
+### The luck test in pictures
+
+A slot machine is a random-number generator. The game's settings tell us two things about it: what it pays back on average (RTP) and how wildly individual payouts swing (variance). From those we can say what a machine *should* have earned and how far from that number pure luck could push it.
+
+```mermaid
+flowchart LR
+    subgraph inputs["From the data"]
+        CI["coin_in<br/>(dollars wagered)"]
+        RTP["RTP<br/>(game setting, e.g. 0.92)"]
+        N["spins"]
+        V["payout variance<br/>(game setting)"]
+        HW["house_win<br/>(what it actually kept)"]
+    end
+    CI & RTP --> T["theo = coin_in × (1 − RTP)<br/>expected house win"]
+    CI & N & V --> SD["sd = avg_bet × √(spins × variance)<br/>one normal swing"]
+    HW & T --> R["residual = house_win − theo"]
+    R & SD --> Zs["z = residual / sd<br/>swings away from expected"]
+    Zs --> I{"read z"}
+    I -->|"between −2 and +2"| N1["ordinary luck<br/>(95% of honest machines)"]
+    I -->|"below −3"| N2["1-in-740 by chance:<br/>inspect"]
+    style N1 fill:#d4edda,stroke:#2e7d32
+    style N2 fill:#f8d7da,stroke:#b71c1c
+```
+
+Real example from `analysis/00_demo_stats_and_model.py`: machine **M-1035** kept $30,304 against a theo of $30,895, z = −0.2. It earned exactly what the math predicted; it's just lightly played. Machine **M-1158** kept $15,796 against a theo of $51,961, z = −5.2. That is not luck.
+
 ## Tech stack (planned)
+
+```mermaid
+flowchart LR
+    DATA[("Parquet files<br/>data/")] --> DUCK["DuckDB + pandas<br/>analysis/"]
+    DUCK --> STATS["luck / location /<br/>downtime / leak tests"]
+    DUCK --> FC["AutoETS forecast<br/>+ rolling CV"]
+    STATS & FC --> CERT["certificate.json<br/>(integer cents)"]
+    CERT --> LEAN["Lean 4 checker<br/>lake exe verify"]
+    LEAN -->|"pass / fail"| DASH["Dashboard<br/>+ Verified ✓ panel"]
+    STATS & FC --> DASH
+    style LEAN fill:#e3e8f5,stroke:#3949ab
+    style DASH fill:#d4edda,stroke:#2e7d32
+```
 
 - **Python 3.12 managed by uv** (`uv sync`, then `uv run python analysis/<script>.py`). Dependencies and their pins live in `pyproject.toml`; `uv.lock` makes the resolution reproducible.
 - **DuckDB, pandas, pyarrow** for the analysis. Query Parquet directly; aggregate big tables before loading.
@@ -83,6 +151,16 @@ hold            = SUM(house_win) / SUM(coin_in)      -- ratio of sums, never mea
 4. Trace a recommendation back to its evidence
 
 ## Suggested order of work
+
+```mermaid
+flowchart LR
+    S1["1. Reproduce GM's<br/>bottom 10"] --> S2["2. Q1: re-rank by<br/>luck + exposure"]
+    S2 --> S3["3. Q3 downtime →<br/>Q2 demand →<br/>Q4 players → Q5 comps"]
+    S3 --> S5["5. Q6 budget plan<br/>+ Lean checker"]
+    S4["4. Forecast model ✓<br/>(AutoETS, rolling CV)"] --> S5
+    S5 --> S6["6. Dashboard →<br/>appendix → write-up → video"]
+    style S4 fill:#d4edda,stroke:#2e7d32
+```
 
 1. Load the 3 starter files; reproduce the GM's naive bottom 10
 2. Re-rank by luck-adjusted, exposure-adjusted measures (Q1)

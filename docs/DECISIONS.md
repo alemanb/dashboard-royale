@@ -32,8 +32,23 @@ Every non-obvious choice we've made, with the reasoning, so a teammate (or a jud
 
 **Decision:** Three layers, each in the tool suited to it.
 
-```
-Python (analysis + model) ──numbers──▶ Lean (decision rule + checks) ──plan + proof──▶ Dashboard "Verified ✓" panel
+```mermaid
+flowchart LR
+    subgraph PY["Python: things that are probabilistic"]
+        A["analysis<br/>luck / location /<br/>downtime / leak"]
+        M["model<br/>AutoETS forecast<br/>+ rolling CV"]
+    end
+    subgraph LN["Lean 4: things that are exact"]
+        R["decision rule<br/>numbers → plan"]
+        C["checks<br/>budget, limits,<br/>no leakage, MAE"]
+    end
+    subgraph UI["Dashboard"]
+        V["Verified ✓ panel"]
+        Q["Q1–Q6 views"]
+    end
+    A & M -->|"certificate.json<br/>integer cents"| R --> C -->|"pass / fail"| V
+    A & M --> Q
+    style LN fill:#e3e8f5,stroke:#3949ab
 ```
 
 | Layer | Tool | Responsibility |
@@ -53,6 +68,27 @@ Python (analysis + model) ──numbers──▶ Lean (decision rule + checks) �
 **Date:** 2026-11-07
 
 **Decision:** A Lake executable (`lake exe verify certificate.json`) reads a JSON certificate exported by Python, with every money amount in **integer cents**, and checks it. Only core Lean; no Mathlib dependency.
+
+```mermaid
+sequenceDiagram
+    participant Py as Python (analysis + model)
+    participant J as certificate.json
+    participant L as Lean checker (lake exe verify)
+    participant D as Dashboard
+    Py->>J: write plan, ranking, folds, MAE<br/>all money as integer cents
+    Py->>L: subprocess.run(["lake", "exe", "verify", "certificate.json"])
+    L->>J: parse with Lean.Json
+    L->>L: recompute costs, sums, sort order, date comparisons
+    alt every rule holds
+        L-->>Py: exit 0, "VERIFIED"
+        Py->>D: show Verified ✓ with each check listed
+    else any rule fails
+        L-->>Py: exit 1, names the failing rule
+        Py->>D: show the failure; plan is not publishable
+    end
+```
+
+The checker never trusts a Python total: it re-adds the cents itself. If Python and Lean disagree, Lean wins and the dashboard says so.
 
 **What it checks (planned):**
 - Budget plan: total cost ≤ 10,000,000 cents; ≤ 3 action types; each quantity ≤ its `quantity_limit`; no conflicting actions on the same machine; comp pilot not combined with the floor-wide comp change. Cost formula `qty × (unit_cents + daily_cents × (30 − lead_days))` with `Nat` subtraction giving the guide's `max(0, ·)` for free.
@@ -83,7 +119,21 @@ Ratios (hold, availability) are compared by cross-multiplication (`a·d < c·b`)
 
 **Why:** The first setup used `python -m venv` + `pip`. Within an hour it drifted: a later `pip install scikit-learn<1.7` pulled a new SciPy, and pip upgraded NumPy to 2.x to satisfy it because that one command didn't restate the `numpy<2` constraint. Torch then failed at runtime. uv resolves the whole dependency set at once against one lockfile, so this cannot recur, and a teammate gets the identical environment.
 
-**Hardware constraint that shapes the pins:** development is on an **Intel Mac (x86_64)**. PyTorch stopped publishing Intel-Mac wheels after **2.2.2**, and that build was compiled against NumPy 1.x. Everything downstream must stay NumPy-1 compatible:
+**Hardware constraint that shapes the pins:** development is on an **Intel Mac (x86_64)**. PyTorch stopped publishing Intel-Mac wheels after **2.2.2**, and that build was compiled against NumPy 1.x. Everything downstream must stay NumPy-1 compatible. One hardware fact cascades into six pins:
+
+```mermaid
+flowchart TD
+    HW["Intel Mac (x86_64)"] --> T["torch == 2.2.2<br/>last Intel-Mac build"]
+    T --> NP["numpy < 2<br/>torch 2.2.2 compiled against 1.x"]
+    T --> CH["chronos-forecasting < 2<br/>Chronos-2 needs torch ≥ 2.6"]
+    T --> TF["transformers < 4.45<br/>newer need torch ≥ 2.6"]
+    T --> PYV["python 3.12<br/>newest with 2.2.2 wheels"]
+    NP --> PA["pyarrow < 21"]
+    NP --> SK["scikit-learn < 1.7"]
+    style HW fill:#f4e1c1,stroke:#8a6d3b
+```
+
+What went wrong with pip: it resolves one command at a time. `pip install scikit-learn<1.7` did not know about `numpy<2` from an earlier command, pulled a SciPy that wanted NumPy 2, and upgraded NumPy. uv resolves the whole graph above at once, every time.
 
 | Pin | Reason |
 |---|---|

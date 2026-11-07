@@ -20,6 +20,48 @@ Follows GUIDE.md §7 to the letter:
 
 Every fold asserts `max(train dates) < min(test dates)` in code; this is one of the facts the Lean checker will re-verify from the exported certificate ([`DECISIONS.md` D4](DECISIONS.md#d4--lean-4-core-without-mathlib-as-an-output-checker)).
 
+### The single holdout, as a timeline
+
+```mermaid
+gantt
+    title Single holdout, stand on May 1 and guess the next 61 days
+    dateFormat YYYY-MM-DD
+    axisFormat %b
+    section Model sees
+    train, 120 days          :done, 2025-01-01, 2025-04-30
+    section Model must guess
+    test, 61 days (frozen)   :crit, 2025-05-01, 2025-06-30
+```
+
+The model is handed everything on the left and must produce 61 numbers for the right, all at once, before we look at the answers.
+
+### How one score is computed
+
+Every number in the result tables is a **mean absolute error (MAE)**: the average size of the daily miss, in dollars.
+
+```mermaid
+flowchart LR
+    A["actual coin-in<br/>each test day"] --> M["miss = |actual − guess|<br/>one per day"]
+    G["model's guess<br/>each test day"] --> M
+    M --> AVG["average the misses<br/>= MAE"]
+    AVG --> R["e.g. $45,104 means:<br/>'off by about $45K<br/>on a typical day'"]
+    style R fill:#fff3cd,stroke:#8a6d3b
+```
+
+Worked example, AutoETS on the April fold:
+
+```
+date      actual         guess          miss
+Apr 1     $1,205,000     $1,180,000     $25,000
+Apr 2     $1,150,000     $1,210,000     $60,000
+Apr 3     $1,310,000     $1,290,000     $20,000
+...
+Apr 30    $1,420,000     $1,355,000     $65,000
+                          average miss = $45,104   ← the number in the table
+```
+
+(Illustrative daily rows; the average is the real one.) Lower is better. Because MAE is in dollars per day, it is directly comparable to the stakes of the decision: a $45K typical miss against a $1.3M typical day is about 3.5%.
+
 ## Candidates
 
 | model | kind | what it assumes | inputs |
@@ -33,6 +75,41 @@ Every fold asserts `max(train dates) < min(test dates)` in code; this is one of 
 | Chronos-Bolt-small | pretrained foundation model, Hugging Face (`amazon/chronos-bolt-small`, 48M params) | zero-shot: pattern-matches the series against what it learned from millions of unrelated series | past values |
 
 All run on CPU in well under a second (Chronos adds ~5 s model load).
+
+### How the two main contenders think
+
+**Weekday mean** keeps seven numbers and never changes its mind:
+
+```mermaid
+flowchart LR
+    T["training days"] --> G["average coin-in<br/>per weekday"]
+    G --> P["Tue $1.11M · Wed $1.15M · … · Sat $1.82M"]
+    P --> F["forecast = the number<br/>for that weekday, forever"]
+```
+
+**AutoETS** (exponential smoothing) keeps a running *level* that drifts as new days arrive, recent days weighing more than old ones, plus a weekly pattern on top:
+
+```mermaid
+flowchart LR
+    Y["each new day's<br/>coin-in"] --> LVL["level: slowly<br/>adapting 'typical day'"]
+    Y --> SEA["weekly pattern:<br/>Sat high, Tue low"]
+    LVL & SEA --> F["forecast = level<br/>+ weekday effect"]
+    AUTO["'Auto': picks additive vs.<br/>multiplicative, with/without trend,<br/>by information criterion"] -.-> LVL
+```
+
+The difference: if the floor gets busier in spring, AutoETS's level follows it; the weekday mean is still quoting January.
+
+**MSTL** goes further and *extrapolates a trend line*. That is why it won one fold and failed another (see results): with little history, a fitted trend can point the wrong way.
+
+```mermaid
+flowchart LR
+    Y["series"] --> D["decompose<br/>(LOESS smoothing)"]
+    D --> TR["trend"] & SE["weekly pattern"] & RE["leftover"]
+    TR -->|"extend forward"| F["forecast =<br/>trend + pattern"]
+    SE -->|"repeat last week"| F
+    RE -->|"assume ≈ 0"| F
+    style TR fill:#f8d7da,stroke:#b71c1c
+```
 
 ## Results
 
@@ -54,7 +131,38 @@ Taken alone, this says "use MSTL." We did not stop here.
 
 ### Rolling-origin cross-validation: four monthly folds
 
-Script: `analysis/02_rolling_cv.py`. Stand at the first of March, April, May, June; train on everything before; forecast that whole month.
+Script: `analysis/02_rolling_cv.py`. One holdout is one exam. Rolling CV gives every model **four separate exams**, standing at the first of March, April, May and June, training only on what came before, and guessing the whole month ahead.
+
+```mermaid
+gantt
+    title Four exams. Each model sees only the grey part and must guess the red part.
+    dateFormat YYYY-MM-DD
+    axisFormat %b
+    section Mar fold
+    train 59 d     :done, 2025-01-01, 2025-02-28
+    guess March    :crit, 2025-03-01, 2025-03-31
+    section Apr fold
+    train 90 d     :done, 2025-01-01, 2025-03-31
+    guess April    :crit, 2025-04-01, 2025-04-30
+    section May fold
+    train 120 d    :done, 2025-01-01, 2025-04-30
+    guess May      :crit, 2025-05-01, 2025-05-31
+    section Jun fold
+    train 151 d    :done, 2025-01-01, 2025-05-31
+    guess June     :crit, 2025-06-01, 2025-06-30
+```
+
+Every model takes the identical four exams with identical scoring, so the rows below are directly comparable.
+
+**How to read the table.** Each cell is one exam's MAE (typical daily miss, in dollars). The two summary columns:
+
+- **mean** = the average of a model's four scores. *"How wrong is it on a typical month?"*
+  AutoETS: (78,367 + 45,104 + 58,274 + 45,927) ÷ 4 = 56,918.
+- **worst** = the largest of its four scores. *"How badly can it fail?"*
+  AutoETS: 78,367 (the March exam).
+- **beats weekday mean** = how many of the four exams it scored lower than the weekday mean.
+
+A model with a good mean but a bad worst is dangerous for a 30-day budget decision, because the bad month might be the one you bet on.
 
 | model | Mar (59 d train) | Apr (90 d) | May (120 d) | Jun (151 d) | mean | worst | beats weekday mean |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -70,6 +178,18 @@ Best model per fold: weekday mean (Mar), weekday mean (Apr), MSTL (May), AutoETS
 (HistGradientBoosting was not included in the rolling run; on the single holdout it tied the weekday mean, which is what a tree model with only calendar features reduces to.)
 
 ## What we conclude
+
+```mermaid
+flowchart LR
+    H["single holdout<br/>(May 1 origin)"] -->|"MSTL best: $56K"| P1["tentative pick:<br/>MSTL"]
+    P1 --> CV["rolling CV<br/>(4 exams)"]
+    CV -->|"MSTL mean $72K,<br/>worst $110K"| X["MSTL was a<br/>one-exam fluke"]
+    CV -->|"AutoETS mean $57K,<br/>worst $78K"| P2["final pick:<br/>AutoETS"]
+    CV -->|"weekday mean $62K,<br/>won 2 of 4"| B["baseline is strong;<br/>say so"]
+    style P1 fill:#fff3cd,stroke:#8a6d3b
+    style X fill:#f8d7da,stroke:#b71c1c
+    style P2 fill:#d4edda,stroke:#2e7d32
+```
 
 1. **AutoETS is the primary model.** Best mean error and best worst-case error; the most stable across folds.
 2. **The weekday mean is a strong baseline and we will say so.** It is 8% worse than AutoETS on average and won two of four folds. The guide is explicit that a model does not need to beat the baseline; honest validation earns the credit.
