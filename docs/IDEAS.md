@@ -13,7 +13,10 @@ A running list of ideas we're batting around. Once something is settled it moves
 ## Leads from the data
 
 - **The un-announced Locals Appreciation Week (Jun 9–15) was not harder to forecast than other days** (MSTL error $54K inside vs. $57K outside on the May 1 holdout). Did the promotion move coin-in at all? Or did it shift something else (comps, food & drink, carded share)? Worth a Q2/Q5 look.
-- **Ten machines sit below z = −2.5 where chance predicts about two** (see `analysis/00_demo_stats_and_model.py`). The excess is where the real Q1 story is. M-1158 (z = −5.2) is the leading leak candidate; M-5076's tiny theo suggests a short time on the floor.
+- **The *lucky* tail is too fat, and it's organized by game** ([`Q1.md`](Q1.md#finding-4--a-lead-we-did-not-expect-the-lucky-tail-is-too-fat)): 9 machines above z = +2.5 where chance predicts 2. Platinum Reels keeps 10.6% against a published 10.0% (mean z +0.54, 2.7 standard errors); Neon Nights +0.32; Comet Cash runs *low* at −0.72 (3.5 s.e.). Is the configured RTP slightly off the published one? Does bet-size mix interact with the pay table? Testable with `machine_hour` bet distributions or by inspecting one machine per game. Not an accusation; a pattern to explain.
+- **Ridgeline: are its machines older?** 56% of faults from 30% of machines. If `install_date` explains it, the fix is replacement of the oldest units rather than preventive maintenance across the brand. Check in Q3.
+- **How much of the Back Forty's $1.26M theo gap is recoverable?** Moving machines redistributes demand. The honest estimate needs Q2 (where demand went) plus `floor_walkways` (is the Back Forty reachable?). Needed before pricing any move/signage action in Q6.
+- ~~Ten machines below z = −2.5 where chance predicts two~~ resolved: an artifact of the variance formula; with each machine's own variance the count matches chance, and only M-1158 remains ([`DECISIONS.md` D7](DECISIONS.md)).
 
 ## Ideas
 

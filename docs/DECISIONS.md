@@ -174,3 +174,17 @@ MAE in dollars; each fold forecasts the entire next month from its first day. Fu
 - **Chronos-Bolt** (48M parameters, zero-shot) lost to the weekday mean in 3 of 4 folds. With 60–150 training points there is nothing for a large model to learn. Model size is not a trade-off at this data scale.
 
 **Consequence for the write-up:** the single-holdout-vs-rolling-CV reversal is itself evidence of honest validation and goes in the Claims & Evidence appendix.
+
+---
+
+## D7 · Luck z-scores use each machine's observed variance, not the game-math formula
+
+**Date:** 2026-11-07
+
+**Decision:** The primary luck score for a machine is `z = (house_win − theo) ÷ sd_emp`, where `sd_emp` is computed from that machine's own day-to-day residuals (`√(VAR(daily house_win − daily theo) × days)`). The textbook formula using `game_math.payout_multiplier_variance` is kept as `z_formula` and reported as the alternative we tested.
+
+**Why:** The formula assumes every spin is at the average bet. Real bets vary within a day, and the variance of a sum of bets depends on the sum of *squared* bets, which is larger. Measured against each machine's actual scatter, the formula understated variance by a median of 24% (and by 1.8–4.6× on Royal Draw, whose bet options span 25¢ to $5). The consequence was material: the formula flagged 24 machines as unlucky where chance predicts 7, and 7 as suspects where chance predicts 2. The empirical version gives 7 and 1, matching chance, with one robust outlier (M-1158) that is extreme under both.
+
+**Trade-off:** the empirical sd is itself an estimate from ~181 daily points per machine and is noisy for machines with short tenure. We accept that over a formula known to be biased in a direction that manufactures false suspects. In a challenge that forbids accusations, a method that over-flags is the wrong kind of wrong.
+
+**Consequence:** `machine_diagnosis.csv` carries both `z` and `z_formula`, plus `var_ratio`; the dashboard shows the empirical score and offers the formula one as a toggle, so a judge can see the alternative explanation. Full account in [`Q1.md`](Q1.md#why-we-had-to-fix-the-variance-formula-first).
