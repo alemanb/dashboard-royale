@@ -4,6 +4,7 @@ Our working plan for **Dashboard Royale** (TAMU Datathon). The official rules ar
 
 | Doc | What's in it |
 |---|---|
+| [`PRIMER.md`](PRIMER.md) | **Start here if the vocabulary is new.** How a slot makes money, luck and z-scores, exposure, what Q1 and Q3 ask, the forecast, the tools, a glossary |
 | **OVERVIEW.md** (this file) | The challenge, deliverables, approach, traps, order of work |
 | [`DECISIONS.md`](DECISIONS.md) | Every non-obvious choice with its reasoning (fork, DuckDB, architecture, Lean, uv, model) |
 | [`Q1.md`](Q1.md) | Which machines are truly weak: the GM's list diagnosed, the Back Forty, M-1158, Ridgeline |
