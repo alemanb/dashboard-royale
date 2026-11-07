@@ -48,7 +48,7 @@ flowchart LR
     end
     A & M -->|"certificate.json<br/>integer cents"| R --> C -->|"pass / fail"| V
     A & M --> Q
-    style LN fill:#e3e8f5,stroke:#3949ab
+    style LN fill:#e3e8f5,stroke:#3949ab,color:#1a1a1a
 ```
 
 | Layer | Tool | Responsibility |
@@ -130,7 +130,7 @@ flowchart TD
     T --> PYV["python 3.12<br/>newest with 2.2.2 wheels"]
     NP --> PA["pyarrow < 21"]
     NP --> SK["scikit-learn < 1.7"]
-    style HW fill:#f4e1c1,stroke:#8a6d3b
+    style HW fill:#f4e1c1,stroke:#8a6d3b,color:#1a1a1a
 ```
 
 What went wrong with pip: it resolves one command at a time. `pip install scikit-learn<1.7` did not know about `numpy<2` from an earlier command, pulled a SciPy that wanted NumPy 2, and upgraded NumPy. uv resolves the whole graph above at once, every time.

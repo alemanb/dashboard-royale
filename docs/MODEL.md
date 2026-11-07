@@ -45,7 +45,7 @@ flowchart LR
     G["model's guess<br/>each test day"] --> M
     M --> AVG["average the misses<br/>= MAE"]
     AVG --> R["e.g. $45,104 means:<br/>'off by about $45K<br/>on a typical day'"]
-    style R fill:#fff3cd,stroke:#8a6d3b
+    style R fill:#fff3cd,stroke:#8a6d3b,color:#1a1a1a
 ```
 
 Worked example, AutoETS on the April fold:
@@ -108,7 +108,7 @@ flowchart LR
     TR -->|"extend forward"| F["forecast =<br/>trend + pattern"]
     SE -->|"repeat last week"| F
     RE -->|"assume ≈ 0"| F
-    style TR fill:#f8d7da,stroke:#b71c1c
+    style TR fill:#f8d7da,stroke:#b71c1c,color:#1a1a1a
 ```
 
 ## Results
@@ -186,9 +186,9 @@ flowchart LR
     CV -->|"MSTL mean $72K,<br/>worst $110K"| X["MSTL was a<br/>one-exam fluke"]
     CV -->|"AutoETS mean $57K,<br/>worst $78K"| P2["final pick:<br/>AutoETS"]
     CV -->|"weekday mean $62K,<br/>won 2 of 4"| B["baseline is strong;<br/>say so"]
-    style P1 fill:#fff3cd,stroke:#8a6d3b
-    style X fill:#f8d7da,stroke:#b71c1c
-    style P2 fill:#d4edda,stroke:#2e7d32
+    style P1 fill:#fff3cd,stroke:#8a6d3b,color:#1a1a1a
+    style X fill:#f8d7da,stroke:#b71c1c,color:#1a1a1a
+    style P2 fill:#d4edda,stroke:#2e7d32,color:#1a1a1a
 ```
 
 1. **AutoETS is the primary model.** Best mean error and best worst-case error; the most stable across folds.

@@ -23,8 +23,8 @@ flowchart TD
     Q -->|"often broken"| D["Technician or<br/>preventive maintenance"]
     Q -->|"pays out wrong"| K["Inspect it<br/>(a lead, not an accusation)"]
     L & P & D & K --> B["$100,000 plan,<br/>each action priced + measured"]
-    style GM fill:#f4e1c1,stroke:#8a6d3b
-    style B fill:#d4edda,stroke:#2e7d32
+    style GM fill:#f4e1c1,stroke:#8a6d3b,color:#1a1a1a
+    style B fill:#d4edda,stroke:#2e7d32,color:#1a1a1a
 ```
 
 Replacing a machine only helps if the machine itself is the problem. Most of the GM's list, we expect, is not.
@@ -63,8 +63,8 @@ flowchart LR
     X -->|"yes"| Z{"Actual vs. expected:<br/>how many swings off?"}
     Z -->|"z between −2 and +2"| OK["LUCK<br/>normal result"]
     Z -->|"z < −3, lots of play,<br/>low volatility"| LEAK["LEAK?<br/>inspect"]
-    style OK fill:#d4edda,stroke:#2e7d32
-    style LEAK fill:#f8d7da,stroke:#b71c1c
+    style OK fill:#d4edda,stroke:#2e7d32,color:#1a1a1a
+    style LEAK fill:#f8d7da,stroke:#b71c1c,color:#1a1a1a
 ```
 
 | Cause | Signal in the data | Fix |
@@ -104,8 +104,8 @@ flowchart LR
     Zs --> I{"read z"}
     I -->|"between −2 and +2"| N1["ordinary luck<br/>(95% of honest machines)"]
     I -->|"below −3"| N2["1-in-740 by chance:<br/>inspect"]
-    style N1 fill:#d4edda,stroke:#2e7d32
-    style N2 fill:#f8d7da,stroke:#b71c1c
+    style N1 fill:#d4edda,stroke:#2e7d32,color:#1a1a1a
+    style N2 fill:#f8d7da,stroke:#b71c1c,color:#1a1a1a
 ```
 
 Real example from `analysis/00_demo_stats_and_model.py`: machine **M-1035** kept $30,304 against a theo of $30,895, z = −0.2. It earned exactly what the math predicted; it's just lightly played. Machine **M-1158** kept $15,796 against a theo of $51,961, z = −5.2. That is not luck.
@@ -121,8 +121,8 @@ flowchart LR
     CERT --> LEAN["Lean 4 checker<br/>lake exe verify"]
     LEAN -->|"pass / fail"| DASH["Dashboard<br/>+ Verified ✓ panel"]
     STATS & FC --> DASH
-    style LEAN fill:#e3e8f5,stroke:#3949ab
-    style DASH fill:#d4edda,stroke:#2e7d32
+    style LEAN fill:#e3e8f5,stroke:#3949ab,color:#1a1a1a
+    style DASH fill:#d4edda,stroke:#2e7d32,color:#1a1a1a
 ```
 
 - **Python 3.12 managed by uv** (`uv sync`, then `uv run python analysis/<script>.py`). Dependencies and their pins live in `pyproject.toml`; `uv.lock` makes the resolution reproducible.
@@ -159,7 +159,7 @@ flowchart LR
     S3 --> S5["5. Q6 budget plan<br/>+ Lean checker"]
     S4["4. Forecast model ✓<br/>(AutoETS, rolling CV)"] --> S5
     S5 --> S6["6. Dashboard →<br/>appendix → write-up → video"]
-    style S4 fill:#d4edda,stroke:#2e7d32
+    style S4 fill:#d4edda,stroke:#2e7d32,color:#1a1a1a
 ```
 
 1. Load the 3 starter files; reproduce the GM's naive bottom 10
