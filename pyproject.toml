@@ -1,0 +1,29 @@
+[project]
+name = "dashboard-royale-analysis"
+version = "0.1.0"
+description = "TAMU Datathon Dashboard Royale: analysis, forecasting, and Lean-verified recommendations"
+# 3.12 is the newest Python with torch 2.2.2 wheels for Intel Mac (see pins below).
+requires-python = ">=3.12,<3.13"
+
+# Pins exist because development happens on an Intel Mac (x86_64). PyTorch stopped
+# publishing Intel-Mac wheels after 2.2.2, and that build was compiled against
+# NumPy 1.x, which forces the rest of the stack to stay NumPy-1 compatible.
+# On Apple Silicon or Linux these pins can be lifted (and Chronos-2 / torch>=2.6 used).
+dependencies = [
+    # analysis
+    "duckdb>=1.3",
+    "pandas>=2.2,<3",
+    "pyarrow<21",            # last line that still supports NumPy 1.x
+    "numpy<2",               # required by torch 2.2.2
+    # forecasting
+    "statsforecast>=2.0",
+    "scikit-learn<1.7",      # 1.7+ requires NumPy 2
+    # pretrained time-series model, zero-shot comparison only
+    "torch==2.2.2",
+    "chronos-forecasting<2", # Chronos-2 needs torch>=2.6; the 1.x line (Chronos-Bolt) runs on 2.2
+    "transformers<4.45",     # newer versions require torch>=2.6
+]
+
+[tool.uv]
+# Keep the resolution reproducible across machines.
+package = false

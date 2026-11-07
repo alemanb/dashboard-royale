@@ -50,7 +50,9 @@ hold            = SUM(house_win) / SUM(coin_in)      -- ratio of sums, never mea
 
 ## Tech stack (planned)
 
-- **Python 3.11+, DuckDB, pandas, pyarrow** for the analysis. Query Parquet directly; aggregate big tables before loading.
+- **Python 3.12 managed by uv** (`uv sync`, then `uv run python analysis/<script>.py`). Dependencies and their pins live in `pyproject.toml`; `uv.lock` makes the resolution reproducible.
+- **DuckDB, pandas, pyarrow** for the analysis. Query Parquet directly; aggregate big tables before loading.
+- **statsforecast, scikit-learn, Chronos-Bolt (Hugging Face)** for the forecast and its comparison models.
 - **Dashboard tool:** to be decided (see [`IDEAS.md`](IDEAS.md)).
 - **Lean 4 (optional checker):** verifies outputs, but doesn't run the analysis. Python exports a JSON certificate (budget plan, ranking, totals in integer cents); Lean checks budget feasibility, action limits and conflicts, sort order, and formula consistency. Lean can't prove statistical claims like "machine X was unlucky."
 
